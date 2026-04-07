@@ -27,6 +27,7 @@
 - `.github/workflows/build-exe.yml` GitHub Actions สำหรับ build และ release `.exe`
 - `.releaserc.json` config ของ `semantic-release`
 - `assets/fonts/` ฟอนต์ Sarabun ที่ bundle มากับแอป
+- `assets/icons/` ไอคอนของโปรแกรม
 
 ## วิธีรันจาก Python
 
@@ -58,7 +59,7 @@ dist\WindowsGenuineChecker.exe
 
 ```bash
 python -m pip install pyinstaller
-python -m PyInstaller --onefile --windowed --name WindowsGenuineChecker --add-data "assets/fonts/Sarabun-Regular.ttf;assets/fonts" --add-data "assets/fonts/Sarabun-Bold.ttf;assets/fonts" windows_genuine_checker.py
+python -m PyInstaller --onefile --windowed --name WindowsGenuineChecker --icon assets/icons/app-icon.ico --add-data "assets/fonts/Sarabun-Regular.ttf;assets/fonts" --add-data "assets/fonts/Sarabun-Bold.ttf;assets/fonts" --add-data "assets/icons/app-icon.ico;assets/icons" --add-data "assets/icons/app-icon.png;assets/icons" windows_genuine_checker.py
 ```
 
 ไฟล์ที่ได้จะอยู่ที่
@@ -70,6 +71,7 @@ dist\WindowsGenuineChecker.exe
 หมายเหตุ:
 
 - ตัว `.exe` จะ bundle ฟอนต์ `Sarabun` ไปด้วย
+- ตัว `.exe` จะใช้ไอคอนของโปรแกรมที่อยู่ใน `assets/icons/`
 - ไม่ต้องดาวน์โหลดฟอนต์เพิ่มตอนใช้งาน
 
 ## วิธี build และ release ด้วย GitHub Actions

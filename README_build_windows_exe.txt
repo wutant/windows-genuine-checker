@@ -5,6 +5,8 @@ Windows Genuine Checker - วิธีสร้าง EXE บน Windows
 - build_exe_pyinstaller.bat
 - assets\fonts\Sarabun-Regular.ttf
 - assets\fonts\Sarabun-Bold.ttf
+- assets\icons\app-icon.ico
+- assets\icons\app-icon.png
 
 วิธีใช้:
 1) ติดตั้ง Python บน Windows
@@ -16,6 +18,10 @@ Windows Genuine Checker - วิธีสร้าง EXE บน Windows
 หมายเหตุเรื่องฟอนต์:
 - โปรแกรมใช้ฟอนต์ Sarabun จากไฟล์ local
 - ตอน build ไฟล์ EXE จะ bundle ฟอนต์ไปด้วย ทำให้ใช้งานแบบ offline ได้
+
+หมายเหตุเรื่องไอคอน:
+- โปรแกรมมี icon ของตัวเอง
+- ตอน build ไฟล์ EXE จะใส่ icon นี้ให้กับตัวโปรแกรมด้วย
 
 หมายเหตุ:
 - ตอนนี้ผมสร้างไฟล์ EXE ให้ตรงนี้ไม่ได้ เพราะสภาพแวดล้อมที่กำลังใช้ไม่ใช่ Windows

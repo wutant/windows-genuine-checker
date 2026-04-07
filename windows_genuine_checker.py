@@ -15,6 +15,8 @@ FONT_CANDIDATES = (
     ("assets", "fonts", "Sarabun-Regular.ttf"),
     ("assets", "fonts", "Sarabun-Bold.ttf"),
 )
+ICON_ICO_PATH = ("assets", "icons", "app-icon.ico")
+ICON_PNG_PATH = ("assets", "icons", "app-icon.png")
 
 
 def resource_path(*parts):
@@ -80,11 +82,13 @@ class App(tk.Tk):
     def __init__(self):
         self._registered_fonts = register_bundled_fonts()
         super().__init__()
+        self._icon_image = None
         self.title(APP_TITLE)
-        self.geometry("860x640")
-        self.minsize(760, 560)
+        self.geometry("940x720")
+        self.minsize(840, 620)
 
         self._configure_fonts()
+        self._configure_window_icon()
         self.status_var = tk.StringVar(value="พร้อมตรวจสอบ")
         self.summary_var = tk.StringVar(value="กดปุ่ม 'ตรวจสอบ' เพื่อเริ่ม")
 
@@ -99,20 +103,21 @@ class App(tk.Tk):
         )
 
         default_font = tkfont.nametofont("TkDefaultFont")
-        default_font.configure(family=self.ui_font_family, size=11)
-        tkfont.nametofont("TkTextFont").configure(family=self.ui_font_family, size=11)
-        tkfont.nametofont("TkMenuFont").configure(family=self.ui_font_family, size=11)
-        tkfont.nametofont("TkHeadingFont").configure(family=self.ui_font_family, size=11, weight="bold")
-        tkfont.nametofont("TkFixedFont").configure(family=self.ui_font_family, size=11)
+        default_font.configure(family=self.ui_font_family, size=14)
+        tkfont.nametofont("TkTextFont").configure(family=self.ui_font_family, size=14)
+        tkfont.nametofont("TkMenuFont").configure(family=self.ui_font_family, size=13)
+        tkfont.nametofont("TkHeadingFont").configure(family=self.ui_font_family, size=14, weight="bold")
+        tkfont.nametofont("TkFixedFont").configure(family=self.ui_font_family, size=13)
 
-        self.title_font = tkfont.Font(family=self.ui_font_family, size=18, weight="bold")
-        self.subtitle_font = tkfont.Font(family=self.ui_font_family, size=11)
-        self.summary_font = tkfont.Font(family=self.ui_font_family, size=12, weight="bold")
-        self.output_font = tkfont.Font(family=self.ui_font_family, size=11)
+        self.title_font = tkfont.Font(family=self.ui_font_family, size=24, weight="bold")
+        self.subtitle_font = tkfont.Font(family=self.ui_font_family, size=15)
+        self.summary_font = tkfont.Font(family=self.ui_font_family, size=17, weight="bold")
+        self.output_font = tkfont.Font(family=self.ui_font_family, size=14)
 
         style = ttk.Style(self)
         style.configure(".", font=default_font)
-        style.configure("TLabelframe.Label", font=(self.ui_font_family, 11, "bold"))
+        style.configure("TLabelframe.Label", font=(self.ui_font_family, 14, "bold"))
+        style.configure("TButton", padding=(14, 8))
 
     def _resolve_font_family(self, *candidates):
         available_families = {name.casefold(): name for name in tkfont.families(self)}
@@ -121,6 +126,24 @@ class App(tk.Tk):
             if match:
                 return match
         return tkfont.nametofont("TkDefaultFont").actual("family")
+
+    def _configure_window_icon(self):
+        ico_path = resource_path(*ICON_ICO_PATH)
+        png_path = resource_path(*ICON_PNG_PATH)
+
+        if ico_path.exists():
+            try:
+                self.iconbitmap(str(ico_path))
+                return
+            except Exception:
+                pass
+
+        if png_path.exists():
+            try:
+                self._icon_image = tk.PhotoImage(file=str(png_path))
+                self.iconphoto(True, self._icon_image)
+            except Exception:
+                self._icon_image = None
 
     def _build_ui(self):
         frame = ttk.Frame(self, padding=16)
@@ -144,7 +167,8 @@ class App(tk.Tk):
                 "2) ใช้ slmgr /dli เพื่อดูประเภทไลเซนส์ เช่น Retail, OEM, KMS\n"
                 "3) สรุปผลเบื้องต้นว่าแท้ / น่าสงสัย / ยังไม่ activated"
             ),
-            justify="left"
+            justify="left",
+            wraplength=820
         )
         info.pack(anchor="w", pady=(0, 14))
 
@@ -158,8 +182,14 @@ class App(tk.Tk):
         summary_box = ttk.LabelFrame(frame, text="สรุปผล", padding=12)
         summary_box.pack(fill="x", pady=(0, 12))
 
-        ttk.Label(summary_box, textvariable=self.summary_var, font=self.summary_font).pack(anchor="w")
-        ttk.Label(summary_box, textvariable=self.status_var).pack(anchor="w", pady=(6, 0))
+        ttk.Label(
+            summary_box,
+            textvariable=self.summary_var,
+            font=self.summary_font,
+            justify="left",
+            wraplength=780
+        ).pack(anchor="w")
+        ttk.Label(summary_box, textvariable=self.status_var, justify="left", wraplength=780).pack(anchor="w", pady=(6, 0))
 
         output_box = ttk.LabelFrame(frame, text="รายละเอียด", padding=8)
         output_box.pack(fill="both", expand=True)
