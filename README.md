@@ -9,6 +9,8 @@
 - `ไม่ activated`
 - `สรุปไม่ชัดเจน`
 
+ฟอนต์ที่ใช้ในแอปคือ `Sarabun` และถูก bundle ไว้ในโปรเจกต์แล้ว เพื่อให้ใช้งานภาษาไทยแบบ offline ได้แม้เครื่องปลายทางไม่มีฟอนต์นี้ติดตั้ง
+
 ## หลักการตรวจ
 
 โปรแกรมจะเรียกคำสั่งต่อไปนี้
@@ -22,7 +24,9 @@
 
 - `windows_genuine_checker.py` ตัวโปรแกรมหลัก
 - `build_exe_pyinstaller.bat` สคริปต์ build `.exe` บน Windows
-- `.github/workflows/build-exe.yml` GitHub Actions สำหรับ build `.exe` อัตโนมัติ
+- `.github/workflows/build-exe.yml` GitHub Actions สำหรับ build และ release `.exe`
+- `.releaserc.json` config ของ `semantic-release`
+- `assets/fonts/` ฟอนต์ Sarabun ที่ bundle มากับแอป
 
 ## วิธีรันจาก Python
 
@@ -54,7 +58,7 @@ dist\WindowsGenuineChecker.exe
 
 ```bash
 python -m pip install pyinstaller
-python -m PyInstaller --onefile --windowed --name WindowsGenuineChecker windows_genuine_checker.py
+python -m PyInstaller --onefile --windowed --name WindowsGenuineChecker --add-data "assets/fonts/Sarabun-Regular.ttf;assets/fonts" --add-data "assets/fonts/Sarabun-Bold.ttf;assets/fonts" windows_genuine_checker.py
 ```
 
 ไฟล์ที่ได้จะอยู่ที่
@@ -63,9 +67,17 @@ python -m PyInstaller --onefile --windowed --name WindowsGenuineChecker windows_
 dist\WindowsGenuineChecker.exe
 ```
 
-## วิธี build ด้วย GitHub Actions
+หมายเหตุ:
 
-repo นี้มี workflow สำหรับ build `.exe` อัตโนมัติเมื่อมี `push`
+- ตัว `.exe` จะ bundle ฟอนต์ `Sarabun` ไปด้วย
+- ไม่ต้องดาวน์โหลดฟอนต์เพิ่มตอนใช้งาน
+
+## วิธี build และ release ด้วย GitHub Actions
+
+repo นี้มี workflow ที่ทำ 2 อย่างในรอบเดียวกันเมื่อมี `push` เข้า `main`
+
+- build `WindowsGenuineChecker.exe`
+- ให้ `semantic-release` สร้าง GitHub Release และแนบไฟล์ `.exe` เข้า release นั้น
 
 ไฟล์ workflow:
 
@@ -75,11 +87,29 @@ repo นี้มี workflow สำหรับ build `.exe` อัตโนม
 
 ขั้นตอนใช้งาน:
 
-1. push โค้ดขึ้น GitHub
-2. รอ workflow `Build EXE` ทำงานบน `windows-latest`
-3. เปิดหน้า workflow run
-4. ดาวน์โหลด artifact ชื่อ `exe`
-5. ภายใน artifact จะมีไฟล์ `WindowsGenuineChecker.exe`
+1. push โค้ดขึ้น branch `main`
+2. workflow จะ build ไฟล์ `WindowsGenuineChecker.exe`
+3. artifact ชื่อ `exe` จะถูกเก็บไว้ใน workflow run
+4. ถ้า commit message เข้ากฎของ `semantic-release` ระบบจะสร้าง GitHub Release ใหม่
+5. ไฟล์ `WindowsGenuineChecker.exe` จะถูกแนบเข้า release ที่เพิ่งถูกสร้าง
+
+## รูปแบบ commit ที่ทำให้เกิด release
+
+`semantic-release` จะออก release จากข้อความ commit เป็นหลัก ดังนั้นควรใช้ Conventional Commits
+
+ตัวอย่างที่จะทำให้เกิด release:
+
+- `feat: add activation details panel`
+- `fix: handle empty slmgr output`
+- `feat!: change verdict logic`
+
+แนวทางโดยย่อ:
+
+- `fix:` จะออก patch release
+- `feat:` จะออก minor release
+- `!` หรือ `BREAKING CHANGE:` จะออก major release
+
+ถ้าเป็น commit แบบทั่วไปที่ไม่เข้า pattern นี้ เช่น `update readme` หรือ `misc changes` ระบบจะไม่สร้าง release ใหม่
 
 ## ข้อจำกัดที่ควรรู้
 

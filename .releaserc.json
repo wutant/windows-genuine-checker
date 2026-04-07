@@ -1,0 +1,22 @@
+{
+  "branches": [
+    "main"
+  ],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    [
+      "@semantic-release/github",
+      {
+        "successComment": false,
+        "failComment": false,
+        "assets": [
+          {
+            "path": "dist/WindowsGenuineChecker.exe",
+            "label": "Windows Genuine Checker EXE"
+          }
+        ]
+      }
+    ]
+  ]
+}

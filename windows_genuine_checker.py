@@ -1,12 +1,63 @@
+import ctypes
+from pathlib import Path
 import subprocess
 import sys
 import platform
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
 
 
 APP_TITLE = "Windows Genuine Checker"
+WINDOWS_PRIVATE_FONT = 0x10
+FONT_CANDIDATES = (
+    ("assets", "fonts", "Sarabun-Regular.ttf"),
+    ("assets", "fonts", "Sarabun-Bold.ttf"),
+)
+
+
+def resource_path(*parts):
+    base_dir = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+    return base_dir.joinpath(*parts)
+
+
+def register_private_font(font_path):
+    if platform.system().lower() != "windows":
+        return False
+
+    try:
+        added_count = ctypes.windll.gdi32.AddFontResourceExW(
+            str(font_path),
+            WINDOWS_PRIVATE_FONT,
+            0
+        )
+        return added_count > 0
+    except Exception:
+        return False
+
+
+def unregister_private_font(font_path):
+    if platform.system().lower() != "windows":
+        return
+
+    try:
+        ctypes.windll.gdi32.RemoveFontResourceExW(
+            str(font_path),
+            WINDOWS_PRIVATE_FONT,
+            0
+        )
+    except Exception:
+        pass
+
+
+def register_bundled_fonts():
+    registered = []
+    for parts in FONT_CANDIDATES:
+        font_path = resource_path(*parts)
+        if font_path.exists() and register_private_font(font_path):
+            registered.append(font_path)
+    return registered
 
 
 def run_command(cmd):
@@ -27,27 +78,61 @@ def run_command(cmd):
 
 class App(tk.Tk):
     def __init__(self):
+        self._registered_fonts = register_bundled_fonts()
         super().__init__()
         self.title(APP_TITLE)
         self.geometry("860x640")
         self.minsize(760, 560)
 
+        self._configure_fonts()
         self.status_var = tk.StringVar(value="พร้อมตรวจสอบ")
         self.summary_var = tk.StringVar(value="กดปุ่ม 'ตรวจสอบ' เพื่อเริ่ม")
 
         self._build_ui()
 
+    def _configure_fonts(self):
+        self.ui_font_family = self._resolve_font_family(
+            "TH Sarabun New",
+            "Sarabun",
+            "Leelawadee UI",
+            "Segoe UI"
+        )
+
+        default_font = tkfont.nametofont("TkDefaultFont")
+        default_font.configure(family=self.ui_font_family, size=11)
+        tkfont.nametofont("TkTextFont").configure(family=self.ui_font_family, size=11)
+        tkfont.nametofont("TkMenuFont").configure(family=self.ui_font_family, size=11)
+        tkfont.nametofont("TkHeadingFont").configure(family=self.ui_font_family, size=11, weight="bold")
+        tkfont.nametofont("TkFixedFont").configure(family=self.ui_font_family, size=11)
+
+        self.title_font = tkfont.Font(family=self.ui_font_family, size=18, weight="bold")
+        self.subtitle_font = tkfont.Font(family=self.ui_font_family, size=11)
+        self.summary_font = tkfont.Font(family=self.ui_font_family, size=12, weight="bold")
+        self.output_font = tkfont.Font(family=self.ui_font_family, size=11)
+
+        style = ttk.Style(self)
+        style.configure(".", font=default_font)
+        style.configure("TLabelframe.Label", font=(self.ui_font_family, 11, "bold"))
+
+    def _resolve_font_family(self, *candidates):
+        available_families = {name.casefold(): name for name in tkfont.families(self)}
+        for candidate in candidates:
+            match = available_families.get(candidate.casefold())
+            if match:
+                return match
+        return tkfont.nametofont("TkDefaultFont").actual("family")
+
     def _build_ui(self):
         frame = ttk.Frame(self, padding=16)
         frame.pack(fill="both", expand=True)
 
-        title = ttk.Label(frame, text=APP_TITLE, font=("Segoe UI", 18, "bold"))
+        title = ttk.Label(frame, text=APP_TITLE, font=self.title_font)
         title.pack(anchor="w")
 
         subtitle = ttk.Label(
             frame,
             text="ตรวจสถานะ Activation ของ Windows โดยไม่ต้อง Run as administrator",
-            font=("Segoe UI", 10)
+            font=self.subtitle_font
         )
         subtitle.pack(anchor="w", pady=(4, 14))
 
@@ -73,13 +158,13 @@ class App(tk.Tk):
         summary_box = ttk.LabelFrame(frame, text="สรุปผล", padding=12)
         summary_box.pack(fill="x", pady=(0, 12))
 
-        ttk.Label(summary_box, textvariable=self.summary_var, font=("Segoe UI", 11, "bold")).pack(anchor="w")
+        ttk.Label(summary_box, textvariable=self.summary_var, font=self.summary_font).pack(anchor="w")
         ttk.Label(summary_box, textvariable=self.status_var).pack(anchor="w", pady=(6, 0))
 
         output_box = ttk.LabelFrame(frame, text="รายละเอียด", padding=8)
         output_box.pack(fill="both", expand=True)
 
-        self.output = ScrolledText(output_box, wrap="word", font=("Consolas", 10))
+        self.output = ScrolledText(output_box, wrap="word", font=self.output_font)
         self.output.pack(fill="both", expand=True)
 
         self._write_intro()
@@ -171,6 +256,11 @@ class App(tk.Tk):
             return "Activation มีวันหมดอายุ", "มักเป็น Volume/KMS และควรตรวจสอบสิทธิ์การใช้งานเพิ่มเติม"
 
         return "สรุปไม่ชัดเจน", "ควรตรวจผลลัพธ์ดิบด้านล่าง หรือส่งผลลัพธ์ให้ผมช่วยแปลได้"
+
+    def destroy(self):
+        for font_path in self._registered_fonts:
+            unregister_private_font(font_path)
+        super().destroy()
 
 
 if __name__ == "__main__":

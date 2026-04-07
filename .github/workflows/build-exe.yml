@@ -1,7 +1,10 @@
-name: Build EXE
+name: Build and Release EXE
 
 on:
   push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
@@ -15,13 +18,42 @@ jobs:
           python-version: "3.11"
 
       - name: Install PyInstaller
-        run: python -m pip install pyinstaller
+        run: python -m pip install --upgrade pip pyinstaller
 
       - name: Build EXE
-        run: python -m PyInstaller --onefile --windowed --name WindowsGenuineChecker windows_genuine_checker.py
+        run: python -m PyInstaller --onefile --windowed --name WindowsGenuineChecker --add-data "assets/fonts/Sarabun-Regular.ttf;assets/fonts" --add-data "assets/fonts/Sarabun-Bold.ttf;assets/fonts" windows_genuine_checker.py
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
           name: exe
           path: dist/WindowsGenuineChecker.exe
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Download EXE artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: exe
+          path: dist
+
+      - name: Install semantic-release
+        run: npm install --no-save semantic-release
+
+      - name: Run semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release

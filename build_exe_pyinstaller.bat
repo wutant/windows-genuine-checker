@@ -21,6 +21,8 @@ py -m PyInstaller ^
   --onefile ^
   --windowed ^
   --name "WindowsGenuineChecker" ^
+  --add-data "assets\fonts\Sarabun-Regular.ttf;assets\fonts" ^
+  --add-data "assets\fonts\Sarabun-Bold.ttf;assets\fonts" ^
   "windows_genuine_checker.py"
 
 echo.
